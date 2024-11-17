@@ -1,52 +1,69 @@
 version: '3'
 
+# Con services se está definiendo los servicios que va a levantar este archivo de configuración que son mysql para base de datos,
+# redis para almacenamiento en caché y nodejs para el servidor web
 services:
   redis:
+    # Usa la imagen de Redis, una base de datos en memoria, específicamente la versión 5.0.3 basada en Alpine Linux (una imagen ligera).
     image: 'redis:5.0.3-alpine'
     ports:
+      # Mapea el puerto 6379 del contenedor (puerto por defecto de Redis) al puerto 6379 en la máquina host.
       - '6379:6379'
     volumes:
       - 'redis:/data'
     networks:
+      # Conecta este servicio a la red "back-tier" para permitir la comunicación con otros servicios dentro de la misma red.
       - back-tier
 
   db:
+    # Usa la imagen oficial de MySQL en su versión 5.7.12, una base de datos relacional muy utilizada.
+    # construye: './mysql'
+    # Este comentario indica que, alternativamente, se podría construir la imagen desde un Dockerfile en la ruta './mysql'.
     image: mysql:5.7.12
     # construye: './mysql'
     restart: always
+    # Con este comando se le asigna un nombre específico al contenedor
     container_name: db-mysql
+    # A partir de aquí se definen las variables de entorno
     environment:
       MYSQL_DATABASE: 'hsbcnet_testing'
-      # Usar root como contraseña es opcional
       MYSQL_USER: 'test'
-      # Se puede usar la contraseña que se desee
       MYSQL_PASSWORD: '11501112'
-      # Contraseña para accesar al root
+      # Contraseña para accesar al usuario principal y completo de la BD (root)
       MYSQL_ROOT_PASSWORD: 'root'
     ports:
+      # Mapea el puerto 3306 del contenedor (puerto por defecto de MySQL) al puerto 3306 en la máquina host
       # <Puerto expuesto> : < puerto MySQL que se ejecuta dentro del contenedor>
       - '3306:3306'
     expose:
-      # Abre el puerto 3306 en el contenedor
+      # Abre el puerto 3306 en el contenedor para que otors servicios en la misma red puedam acceder a él
       - '3306'
     # Aquí se conservarán nuestros datos
     volumes:
-      # - db-data:/var/lib/mysql
+      # Con el volumen se monta para inicializar la base de datos con scripts de la carpeta "dump"
       - ./dump:/docker-entrypoint-initdb.d
     networks:
       - back-tier
 
+  # Aquí se cofigura el servidor web node.js
   web:
+    # A través del build construye la imagen usando el Dockerfile que está en la carpeta "nodejs"
     build: './nodejs'
+    # Variables de entorno
     env_file:
       - '.env'
     ports:
       - '80:8000'
     volumes:
       - './nodejs:/app'
+      # Conecta el servicio a dos redes diferentes: 
+      # - "front-tier": para comunicación con servicios externos o el host.
+      # - "back-tier": para comunicación con Redis y MySQL.
     networks:
       - front-tier
       - back-tier
+    # Este comando se utiliza para las dependencias, se garantiza que redis y 
+    # mysql estén levantas antes de inicar el servicio de nodejs
     depends_on:
       - redis
       - db
@@ -55,6 +72,7 @@ volumes:
   redis:
     # db-data:
 
+    # A través de las redes se organiza la comunicación entre servicios
 networks:
   front-tier:
   back-tier:
