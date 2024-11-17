@@ -12,24 +12,24 @@ services:
 
   db:
     image: mysql:5.7.12
-    # build: './mysql'
+    # construye: './mysql'
     restart: always
     container_name: db-mysql
     environment:
       MYSQL_DATABASE: 'hsbcnet_testing'
-      # So you don't have to use root, but you can if you like
+      # Usar root como contraseña es opcional
       MYSQL_USER: 'test'
-      # You can use whatever password you like
+      # Se puede usar la contraseña que se desee
       MYSQL_PASSWORD: '11501112'
-      # Password for root access
+      # Contraseña para accesar al root
       MYSQL_ROOT_PASSWORD: 'root'
     ports:
-      # <Port exposed> : < MySQL Port running inside container>
+      # <Puerto expuesto> : < puerto MySQL que se ejecuta dentro del contenedor>
       - '3306:3306'
     expose:
-      # Opens port 3306 on the container
+      # Abre el puerto 3306 en el contenedor
       - '3306'
-    # Where our data will be persisted
+    # Aquí se conservarán nuestros datos
     volumes:
       # - db-data:/var/lib/mysql
       - ./dump:/docker-entrypoint-initdb.d
@@ -38,7 +38,7 @@ services:
 
   web:
     build: './nodejs'
-    env_file: 
+    env_file:
       - '.env'
     ports:
       - '80:8000'
@@ -53,7 +53,7 @@ services:
 
 volumes:
   redis:
-  # db-data:
+    # db-data:
 
 networks:
   front-tier:
